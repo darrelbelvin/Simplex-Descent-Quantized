@@ -1,2 +1,2 @@
 # Nelder-Mead-Quantized
-A quantized implementation of the Nelder-Mead optimization algorithm
+A quantized implementation of a simplex descent algorithm inspired by the Nelder-Mead algorithm
