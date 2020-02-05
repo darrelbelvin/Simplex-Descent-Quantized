@@ -46,7 +46,7 @@ def simplex_descent_quantized(func_quanta, quanta, x0, max_iters = 1000, **kwarg
         else:
             this_map = np.zeros(bounds[:,1]-bounds[:,0], dtype=bool)
     
-    func = lambda x_quanta: func_quanta(x_quanta * quanta)
+    func = lambda x_quanta: func_quanta((x_quanta * quanta).astype(x0.dtype))
 
     evals={}
 
@@ -61,8 +61,6 @@ def simplex_descent_quantized(func_quanta, quanta, x0, max_iters = 1000, **kwarg
         return new_point
 
     def get_val_bounded(new_point):
-        
-
         listed = tuple(new_point)
         if listed in evals.keys():
             return evals[listed]
@@ -103,7 +101,7 @@ def simplex_descent_quantized(func_quanta, quanta, x0, max_iters = 1000, **kwarg
                 box[mask] = True
 
             except np.linalg.LinAlgError:
-                print('simplex is degenerate')
+                pass # print('simplex is degenerate')
             
             
 
@@ -128,11 +126,14 @@ def simplex_descent_quantized(func_quanta, quanta, x0, max_iters = 1000, **kwarg
         
         return False
     
+    initial_simplex_size = None
+    if 'initial_simplex_size' in kwargs:
+        initial_simplex_size = (np.ones(x0.shape) * kwargs['initial_simplex_size'] / quanta).astype(int)
     
     if 'initial_simplex' in kwargs:
         simplex = np.array(kwargs['initial_simplex'] / quanta).astype(int)
     else:
-        simplex = x0 + np.concatenate([np.identity(dims, dtype=int) * 10, np.zeros((1,dims), dtype=int)]) - 2
+        simplex = x0 + np.concatenate([np.identity(dims, dtype=int) * initial_simplex_size, np.zeros((1,dims), dtype=int)]) - 2
         simplex = np.apply_along_axis(get_point_bounded, 1, simplex)
     assert simplex.shape == (dims + 1, dims)
 
@@ -183,7 +184,7 @@ def simplex_descent_quantized(func_quanta, quanta, x0, max_iters = 1000, **kwarg
             shrunken_val = get_val_bounded(shrunken)
 
             if np.all(shrunken == simplex[-1]):
-                print('not moving')
+                # print('not moving')
                 break
             
             step(shrunken, shrunken_val)
